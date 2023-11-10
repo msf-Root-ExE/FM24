@@ -3,29 +3,54 @@
 # Define an array of Premier League teams
 teams=("Arsenal" "Aston Villa" "Bournemouth" "Brentford" "Brighton" "Chelsea" "Crystal Palace" "Everton" "Fulham" "Leeds United" "Leicester City" "Liverpool" "Manchester City" "Manchester United" "Newcastle United" "Nottingham Forest" "Southampton" "Tottenham Hotspur" "West Ham United" "Wolverhampton Wanderers")
 
-# Get the length of the teams array
-num_teams=${#teams[@]}
+# Define an array of names
+names=("Ross" "Joey" "James")
 
-# Randomly assign a team to Ross
-ross_team=${teams[$((RANDOM % num_teams))]}
+# Shuffle the names
+shuffled_names=($(shuf -e "${names[@]}"))
 
-# Randomly assign a team to Joey, different from Ross's team
-while true; do
-    joey_team=${teams[$((RANDOM % num_teams))]}
-    if [[ "$joey_team" != "$ross_team" ]]; then
-        break
+# Function to assign a team to a person
+assign_team() {
+    local name=$1
+    local pick
+    while true; do
+        pick=${teams[$((RANDOM % ${#teams[@]}))]}
+        if [[ ! " ${assigned_teams[@]} " =~ " ${pick} " ]]; then
+            echo "$name has been assigned: $pick"
+            assigned_teams+=("$pick")
+            break
+        fi
+    done
+}
+
+# Function to offer a repick
+repick_team() {
+    local name=$1
+    local current_team=$2
+    local pick
+    echo "$name, do you want to repick your team? (yes/no)"
+    read answer
+    if [[ $answer == "yes" ]]; then
+        while true; do
+            pick=${teams[$((RANDOM % ${#teams[@]}))]}
+            if [[ ! " ${assigned_teams[@]} " =~ " ${pick} " && "$pick" != "$current_team" ]]; then
+                echo "$name repicked and got: $pick"
+                assigned_teams+=("$pick")
+                break
+            fi
+        done
+    else
+        echo "$name chose to stick with $current_team."
     fi
+}
+
+# Assign teams initially
+declare -a assigned_teams
+for name in "${shuffled_names[@]}"; do
+    assign_team "$name"
 done
 
-# Randomly assign a team to James, different from Ross's and Joey's teams
-while true; do
-    james_team=${teams[$((RANDOM % num_teams))]}
-    if [[ "$james_team" != "$ross_team" ]] && [[ "$james_team" != "$joey_team" ]]; then
-        break
-    fi
+# Offer a repick
+for name in "${shuffled_names[@]}"; do
+    repick_team "$name" "${assigned_teams[$((RANDOM % ${#assigned_teams[@]}))]}"
 done
-
-# Output the results
-echo "Ross has been assigned: $ross_team"
-echo "Joey has been assigned: $joey_team"
-echo "James has been assigned: $james_team"
